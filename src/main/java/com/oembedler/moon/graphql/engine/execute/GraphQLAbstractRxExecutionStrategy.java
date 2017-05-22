@@ -19,6 +19,7 @@
 
 package com.oembedler.moon.graphql.engine.execute;
 
+import com.google.common.collect.Lists;
 import com.oembedler.moon.graphql.GraphQLConstants;
 import com.oembedler.moon.graphql.engine.GraphQLSchemaHolder;
 import com.oembedler.moon.graphql.engine.dfs.GraphQLFieldDefinitionWrapper;
@@ -147,11 +148,12 @@ abstract class GraphQLAbstractRxExecutionStrategy extends ExecutionStrategy {
     }
 
     @Override
-    protected ExecutionResult completeValueForList(ExecutionContext executionContext, GraphQLList fieldType, List<Field> fields, List<Object> result) {
+    protected ExecutionResult completeValueForList(ExecutionContext executionContext, GraphQLList fieldType, List<Field> fields, Iterable<Object> result) {
+        List<Object> resultList = Lists.newArrayList(result);
         Observable<List<ListTuple>> cachedObservable =
                 Observable.from(
-                        IntStream.range(0, result.size())
-                                .mapToObj(idx -> new ListTuple(idx, result.get(idx), null))
+                        IntStream.range(0, resultList.size())
+                                .mapToObj(idx -> new ListTuple(idx, resultList.get(idx), null))
                                 .toArray(ListTuple[]::new)
                 )
                         .flatMap(tuple -> {
