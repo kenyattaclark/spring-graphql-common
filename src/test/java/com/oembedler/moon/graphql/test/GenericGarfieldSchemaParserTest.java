@@ -115,6 +115,7 @@ public class GenericGarfieldSchemaParserTest {
         GraphQLRxExecutionResult result =
                 GraphQLQueryExecutor
                         .create(graphQLSchemaHolder)
+                        .operation("IntrospectionQuery")
                         .query(getClasspathResourceAsString("introspection.query"))
                         .execute();
 

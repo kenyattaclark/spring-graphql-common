@@ -141,26 +141,29 @@ public class GraphQLSchemaDfsTraversal {
                 ReflectionUtils.getAllFields(implClass).forEach(field -> {
                     GraphQLFieldDefinition definition = getFieldDefinition(dfsContext, implClass, field);
                     if (definition != null)
-                        graphQLFieldDefinitions.add(definition);
+                        addFieldDefinition(graphQLFieldDefinitions, definition);
                 });
 
                 ReflectionUtils.getAllMethods(implClass).forEach(method -> {
                     GraphQLFieldDefinition definition = getMethodDefinition(dfsContext, implClass, method);
                     if (definition != null)
-                        graphQLFieldDefinitions.add(definition);
+                        addFieldDefinition(graphQLFieldDefinitions, definition);
                 });
 
                 List<GraphQLType> graphQLInterfaceTypes = Lists.newArrayList();
                 if (implClass.isInterface()) {
                     if (resolvableTypeAccessor.isGraphQLUnion()) {
-                        List<GraphQLType> possibleTypes = new ArrayList<>();
+                        List<GraphQLObjectType> possibleTypes = new ArrayList<>();
                         for (Class<?> possibleType : resolvableTypeAccessor.getGraphQLUnionPossibleTypes()) {
-                            possibleTypes.add(createGraphQLObjectTypeRecursively(dfsContext, possibleType));
+                            GraphQLType type = createGraphQLObjectTypeRecursively(dfsContext, possibleType);
+                            if (type instanceof GraphQLObjectType) {
+                                possibleTypes.add((GraphQLObjectType) type);
+                            }
                         }
 
                         graphQLObjectType = GraphQLUnionType.newUnionType()
                                 .name(resolvableTypeAccessor.getName())
-                                .possibleTypes(possibleTypes.toArray(new GraphQLType[possibleTypes.size()]))
+                                .possibleTypes(possibleTypes.toArray(new GraphQLObjectType[possibleTypes.size()]))
                                 .typeResolver(new CompleteObjectTreeTypeResolver(objectTypeResolverMap))
                                 .description(resolvableTypeAccessor.getDescription())
                                 .build();
@@ -197,6 +200,26 @@ public class GraphQLSchemaDfsTraversal {
             graphQLObjectType = new GraphQLTypeReference(objectName);
         }
         return graphQLObjectType;
+    }
+
+    /**
+     * Graphql-java does not accept duplicate field definitions. This method only adds to a list of field definitions
+     * if the field does not already exist. In reflection terms, it does not check that class annotations will have
+     * preference over interface field definitions yet.
+     * @param graphQLFieldDefinitions the list of {@link GraphQLFieldDefinition} to possibly add to
+     * @param definition the field to be added
+     * @return false if the field is already a duplicate, otherwise it delegates to {@link List#add(Object)}
+     */
+    private boolean addFieldDefinition(List<GraphQLFieldDefinition> graphQLFieldDefinitions, GraphQLFieldDefinition definition) {
+        final boolean fieldPresent = graphQLFieldDefinitions
+                .stream()
+                .anyMatch(field -> field.getName().equals(definition.getName()));
+
+        if (fieldPresent) {
+            return false;
+        } else {
+            return graphQLFieldDefinitions.add(definition);
+        }
     }
 
     public GraphQLInterfaceType[] resolveInterfaceReferences(DfsContext dfsContext, List<GraphQLType> graphQLInterfaceTypes) {
@@ -488,7 +511,7 @@ public class GraphQLSchemaDfsTraversal {
                 }
                 GraphQLFieldDefinition mutationField = fieldBuilder.build();
                 addToFieldDefinitionResolverMap(dfsContext, mutationField, methodReturnTypeResolvableTypeAccessor.getGraphQLComplexitySpelExpression());
-                graphQLFieldDefinitions.add(mutationField);
+                addFieldDefinition(graphQLFieldDefinitions, mutationField);
             }
         });
 

@@ -360,6 +360,7 @@ public class GenericTodoSchemaParserTest {
         GraphQLRxExecutionResult result =
                 GraphQLQueryExecutor
                         .create(graphQLSchemaHolder)
+                        .operation("TodoQuery")
                         .query(readClasspathResourceToString("selection-operation-call.query"))
                         .execute();
 
