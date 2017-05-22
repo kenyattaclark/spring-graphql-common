@@ -23,6 +23,7 @@ import com.oembedler.moon.graphql.engine.GraphQLSchemaHolder;
 import graphql.ExecutionResult;
 import graphql.GraphQLException;
 import graphql.execution.*;
+import graphql.execution.instrumentation.NoOpInstrumentation;
 import graphql.language.Document;
 import graphql.language.Field;
 import graphql.language.OperationDefinition;
@@ -53,7 +54,8 @@ class RxExecution {
     }
 
     public ExecutionResult execute(GraphQLSchema graphQLSchema, Object root, Document document, String operationName, Map<String, Object> args) {
-        ExecutionContextBuilder executionContextBuilder = new ExecutionContextBuilder(new ValuesResolver());
+        ExecutionContextBuilder executionContextBuilder =
+            new ExecutionContextBuilder(new ValuesResolver(), NoOpInstrumentation.INSTANCE).executionId(ExecutionId.from("1"));
         ExecutionContext executionContext = executionContextBuilder.build(graphQLSchema, strategy, strategy, root, document, operationName, args);
         return executeOperation(executionContext, root, executionContext.getOperationDefinition());
     }

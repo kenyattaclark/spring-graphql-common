@@ -23,7 +23,9 @@ import graphql.ExecutionResult;
 import graphql.GraphQLError;
 import rx.Observable;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Idea was borrowed from <a href="https://github.com/nfl/graphql-rxjava"></a>
@@ -77,5 +79,11 @@ public class GraphQLRxExecutionResult implements ExecutionResult {
     @Override
     public List<GraphQLError> getErrors() {
         return (List<GraphQLError>) errorsObservable.toBlocking().first();
+    }
+
+    @Override
+    public Map<Object, Object> getExtensions() {
+        //TODO: This needs to be implemented
+        return new HashMap<>();
     }
 }

@@ -39,7 +39,9 @@ class GraphQLExecutionContext extends ExecutionContext {
     private final int currentDepth;
 
     public GraphQLExecutionContext(ExecutionContext delegate, int currentDepth) {
-        super(delegate.getGraphQLSchema(),
+        super(delegate.getInstrumentation(),
+            delegate.getExecutionId(),
+            delegate.getGraphQLSchema(),
             delegate.getQueryStrategy(),
             delegate.getMutationStrategy(),
             delegate.getFragmentsByName(),
